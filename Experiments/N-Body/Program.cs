@@ -1,15 +1,21 @@
-﻿using N_Body.GUI.GUIs;
-using N_Body.Models;
+﻿using N_Body.Models;
+using N_Body.Render;
 using System.Reflection;
+using N_Body.Math;
 
 
-ConsoleTUI _consoleUI = new ConsoleTUI();
+ImRender _ImRender = new ImRender();
+BodyPotitionCalculators _BodyPotitionCalculators = new BodyPotitionCalculators();
+Simulation _simulation = new Simulation();
 
-_consoleUI.Render();
-
-while (true) //infitite loop for test
+while (true) 
 {
-    _consoleUI.Render();
+    
+    _ImRender.Render();
+    _BodyPotitionCalculators.CalculateForces(_simulation.Bodies);
+    _BodyPotitionCalculators.UpdatePositions(_simulation.Bodies, 0.01);
+    Console.Clear();
+    Console.WriteLine($"Star X: {_simulation.Bodies[0].X:F2}  CoolStar X: {_simulation.Bodies[1].X:F2}");
 
 }
 

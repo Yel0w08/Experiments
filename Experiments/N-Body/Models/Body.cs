@@ -7,7 +7,7 @@ namespace N_Body.Models
 {
    
 
-        public struct Body
+        public class Body
         {
 
            public string name;
@@ -21,6 +21,9 @@ namespace N_Body.Models
             public double Z;
         public double rayon;
         public double r;
+        public double aX;
+        public double aY;
+        public double aZ;
 
     }
 

@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <Folder Include="GUI\GUIs\" />
-    <Folder Include="Math\" />
     <Folder Include="Render\" />
   </ItemGroup>
 

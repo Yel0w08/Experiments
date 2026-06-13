@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <Folder Include="GUI\GUIs\" />
+    <Folder Include="Render\Shaders\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -16,7 +16,7 @@ namespace N_Body.Render
             _calc = calc;
         }
 
-
+        private GL _gl;
 
         private IWindow _window;
         private Simulation _simulation;
@@ -33,7 +33,15 @@ namespace N_Body.Render
 
 
             _window = Window.Create(options);
-            _window.Initialize();
+
+            _window.Load += () =>
+            {
+                _gl = GL.GetApi(_window);
+                _gl.ClearColor(0, 0, 0, 1); 
+
+
+            };
+
 
             _window.Render += (dt) =>
             {
@@ -43,6 +51,10 @@ namespace N_Body.Render
                 Console.WriteLine($"Star X: {_simulation.Bodies[0].X:F2}");
 
             };
+
+
+
+
             _window.Run();
 
 

@@ -1,0 +1,4 @@
+/Experiments/N-Body/bin
+*.exe
+/Experiments/N-Body/obj
+/Experiments/N-Body/.vs

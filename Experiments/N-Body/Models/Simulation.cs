@@ -7,14 +7,14 @@ public class Simulation
     public Simulation()
     {
         Bodies = new List<Body>();
-        Bodies.Add(new Body { name = "Star", mass = 1e30, X = 0, Y = 0, Z = 0 });
+        Bodies.Add(new Body { name = "Star", mass = 1e32, X = 0, Y = 0, Z = 0 });
 
         for (int i = 0; i < 20; i++)
         {
             Bodies.Add(new Body
             {
                 name = $"Body_{i}",
-                mass = 1e24 + random.NextDouble() * 1e26,
+                mass = 1e20 + random.NextDouble() * 1e30,
                 X = (random.NextDouble() - 0.5) * 4e11,
                 Y = (random.NextDouble() - 0.5) * 4e11,
                 Z = 0,
@@ -28,8 +28,8 @@ public class Simulation
     {
         Bodies.Add(new Body
         {
-            name = $"Body_{Bodies.Count}",
-            mass = 1e24 + random.NextDouble() * 1e26,
+
+            mass = 1e20 + random.NextDouble() * 1e30,
             X = (random.NextDouble() - 0.5) * 4e11,
             Y = (random.NextDouble() - 0.5) * 4e11,
             Z = 0,

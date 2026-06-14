@@ -4,7 +4,10 @@ layout(location = 0) in vec3 aPos;
 uniform mat4 uView;
 uniform mat4 uProjection;
 
+uniform vec3 uPosition;
+uniform mat4 uModel;
+
 void main() {
-    gl_Position = uProjection * uView * vec4(aPos, 1.0);
-    gl_PointSize = 5.0;
+    vec3 worldPos = aPos + uPosition;
+    gl_Position = uProjection * uView * uModel * vec4(worldPos, 1.0);
 }

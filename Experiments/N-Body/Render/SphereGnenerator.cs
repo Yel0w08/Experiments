@@ -26,6 +26,27 @@ namespace N_Body.Render
             }
             return vertices.ToArray();
         }
+        public static uint[] GenerateIndices(int segments)
+        {
+            var indices = new List<uint>();
+            for (int i = 0; i < segments; i++)
+            {
+                for (int j = 0; j < segments; j++)
+                {
+                    uint row1 = (uint)(i * (segments + 1) + j);
+                    uint row2 = (uint)((i + 1) * (segments + 1) + j);
+                    // triangle 1
+                    indices.Add(row1);
+                    indices.Add(row1 + 1);
+                    indices.Add(row2);
+                    // triangle 2
+                    indices.Add(row2);
+                    indices.Add(row1 + 1);
+                    indices.Add(row2 + 1);
+                }
+            }
+            return indices.ToArray();
+        }
 
     }
 }

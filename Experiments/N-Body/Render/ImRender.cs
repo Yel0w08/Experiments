@@ -8,6 +8,7 @@ using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
 using System;
 using System.Collections.Generic;
+using System.Runtime;
 using System.Text;
 using static Silk.NET.Core.Native.WinString;
 
@@ -33,12 +34,19 @@ namespace N_Body.Render
         private BodyPotitionCalculators _calc;
         private ImGuiController _imguiController;
         private IInputContext _input;
-        private float _camDistance = 3.0f;
+        private float _camDistance = 10.0f;
         private float _camAngleX = 0.0f;
         private float _camAngleY = 0.0f;
         private float _scale = 1e11f;
         private int _uView;
         private int _uProjection;
+        private uint _ebo;
+        private float[] _sphereVertices;
+        private uint[] _sphereIndices;
+        private int _uPosition;
+        private int NumberOfBodyToAdd = 1;
+        private int _uMass;
+        private int _uModel;
 
         public void Initalize()
         {
@@ -56,6 +64,7 @@ namespace N_Body.Render
             {
                 _gl = GL.GetApi(_window);
 
+                _gl.Enable(EnableCap.DepthTest);
                 _gl.ClearColor(0, 0, 0, 1);
 
                 string vertSrc = File.ReadAllText("Shaders/body.vert");
@@ -68,6 +77,9 @@ namespace N_Body.Render
                 uint frag = _gl.CreateShader(ShaderType.FragmentShader);
                 _gl.ShaderSource(frag, fragSrc);
                 _gl.CompileShader(frag);
+                _gl.GetShader(vert, ShaderParameterName.CompileStatus, out int vertOk);
+                _gl.GetShader(frag, ShaderParameterName.CompileStatus, out int fragOk);
+                Console.WriteLine($"Vert: {vertOk} Frag: {fragOk}");
 
                 _program = _gl.CreateProgram();
 
@@ -75,17 +87,38 @@ namespace N_Body.Render
                 _gl.AttachShader(_program, frag);
                 _gl.LinkProgram(_program);
 
+                _gl.GetProgram(_program, ProgramPropertyARB.LinkStatus, out int linkOk);
+                Console.WriteLine($"Link: {linkOk}");
+                string log = _gl.GetProgramInfoLog(_program);
+                Console.WriteLine($"Log: '{log}'");
+                Console.WriteLine($"Program ID: {_program}");
+
                 _vao = _gl.GenVertexArray();
                 _vbo = _gl.GenBuffer();
+
+                _sphereVertices = SphereGnenerator.Generate(0.15f, 16);
+                _sphereIndices = SphereGnenerator.GenerateIndices(16);
+
+                _ebo = _gl.GenBuffer();
+
+                _gl.BindVertexArray(_vao);
+                _gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, _ebo);
+                _gl.BufferData(BufferTargetARB.ElementArrayBuffer, (nuint)(_sphereIndices.Length * sizeof(uint)), _sphereIndices, BufferUsageARB.StaticDraw);
+
+                _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
+                _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(_sphereVertices.Length * sizeof(float)), _sphereVertices, BufferUsageARB.StaticDraw);
+                _gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+                _gl.EnableVertexAttribArray(0);
+
                 _input = _window.CreateInput();
 
+                _uPosition = _gl.GetUniformLocation(_program, "uPosition");
 
-                _imguiController = new ImGuiController(_gl, _window, _input);
 
 
                 _input.Mice[0].Scroll += (mouse, wheel) =>
                 {
-                    _scale *= wheel.Y > 0 ? 0.8f : 1.2f;
+                    _camDistance *= wheel.Y > 0 ? 0.8f : 1.2f;
                 };
 
                 //_input.Mice[0].MouseMove += (mouse, delta) =>
@@ -96,40 +129,42 @@ namespace N_Body.Render
                 //        _camAngleX += delta.Y * 0.01f;
                 //    }
                 //};
-
-
+                _uModel = _gl.GetUniformLocation(_program, "uModel");
+                _uMass = _gl.GetUniformLocation(_program, "uMass");
                 _uView = _gl.GetUniformLocation(_program, "uView");
                 _uProjection = _gl.GetUniformLocation(_program, "uProjection");
+                _imguiController = new ImGuiController(_gl, _window, _input);
+                NumberOfBodyToAdd = _simulation.Bodies.Count;
 
             };
 
             _window.Render += (deltaTime) =>
             {
 
-                _gl.Clear(ClearBufferMask.ColorBufferBit);
+                _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
                 _calc.CalculateForces(_simulation.Bodies);
                 _calc.UpdatePositions(_simulation.Bodies, _dt);
 
 
 
-                float[] positions = new float[_simulation.Bodies.Count * 3];
-                for (int i = 0; i < _simulation.Bodies.Count; i++)
-                {
-                    positions[i * 3] = (float)(_simulation.Bodies[i].X / _scale);
-                    positions[i * 3 + 1] = (float)(_simulation.Bodies[i].Y / _scale);
-                    positions[i * 3 + 2] = (float)(_simulation.Bodies[i].Z / _scale);
-                }
+                //float[] positions = new float[_simulation.Bodies.Count * 3];
+                //for (int i = 0; i < _simulation.Bodies.Count; i++)
+                //{
+                //    positions[i * 3] = (float)(_simulation.Bodies[i].X / _scale);
+                //    positions[i * 3 + 1] = (float)(_simulation.Bodies[i].Y / _scale);
+                //    positions[i * 3 + 2] = (float)(_simulation.Bodies[i].Z / _scale);
+                //}
 
-                _gl.BindVertexArray(_vao);
+                //_gl.BindVertexArray(_vao);
 
-                _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
-                _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(positions.Length * sizeof(float)), positions, BufferUsageARB.DynamicDraw);
+                //_gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
+                //_gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(positions.Length * sizeof(float)), positions, BufferUsageARB.DynamicDraw);
 
 
-                _gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+                //_gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
 
-                _gl.EnableVertexAttribArray(0);
+                //_gl.EnableVertexAttribArray(0);
 
                 _gl.UseProgram(_program);
 
@@ -160,23 +195,53 @@ namespace N_Body.Render
                 _imguiController.Update((float)deltaTime);
 
 
-                _gl.DrawArrays(PrimitiveType.Points, 0, (uint)_simulation.Bodies.Count);
+                //_gl.DrawArrays(PrimitiveType.Points, 0, (uint)_simulation.Bodies.Count);
+
+                //_gl.BindVertexArray(_vao);
+                //_gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
+                //_gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(_sphereVertices.Length * sizeof(float)), _sphereVertices, BufferUsageARB.DynamicDraw);
+
+                _gl.BindVertexArray(_vao);
+
+                for (int i = 0; i < _simulation.Bodies.Count; i++)
+                {
+                    float massScale = (float)(System.Math.Log10(_simulation.Bodies[i].mass) - 23) / 10f;
+                    var model = Matrix4X4.CreateScale(massScale);
+                    _gl.UniformMatrix4(_uModel, 1, false, ref model.Row1.X);
+
+                    float px = (float)(_simulation.Bodies[i].X / _scale);
+                    float py = (float)(_simulation.Bodies[i].Y / _scale);
+                    float pz = (float)(_simulation.Bodies[i].Z / _scale);
+                    _gl.Uniform3(_uPosition, px, py, pz);
+                    unsafe { _gl.DrawElements(PrimitiveType.Triangles, (uint)_sphereIndices.Length, DrawElementsType.UnsignedInt, null); }
+                }
 
                 ImGui.Begin("Controls");
                 ImGui.SliderFloat("Speed", ref _dt, 0.001f, 10000.0f);
-                if (ImGui.Button("Add Body"))
+                int prev = NumberOfBodyToAdd;
+                ImGui.InputInt("Number of Body", ref NumberOfBodyToAdd);
+                if (NumberOfBodyToAdd > prev)
                 {
-                    _simulation.AddRandomBody();
+                    for (int i = 0; i < NumberOfBodyToAdd - prev; i++)
+                        _simulation.AddRandomBody();
                 }
-                ImGui.Text($"Bodies: {_simulation.Bodies.Count}");
+                else if (NumberOfBodyToAdd < prev)
+                {
+                    for (int i = 0; i < prev - NumberOfBodyToAdd; i++)
+                        _simulation.Bodies.RemoveAt(_simulation.Bodies.Count - 1);
+                }
+
+
 
                 ImGui.End();
+
 
 
                 _imguiController.Render();
 
 
             };
+
 
 
 

@@ -32,6 +32,10 @@ namespace N_Body.Render
         private BodyPotitionCalculators _calc;
         private ImGuiController _imguiController;
         private IInputContext _input;
+
+        private float _scale = 1e11f;
+
+
         public void Initalize()
         {
 
@@ -73,6 +77,13 @@ namespace N_Body.Render
 
 
                 _imguiController = new ImGuiController(_gl, _window, _input);
+
+
+                _input.Mice[0].Scroll += (mouse, wheel) =>
+                {
+                    _scale *= wheel.Y > 0 ? 0.8f : 1.2f;
+                };
+
 
             };
 
@@ -117,6 +128,11 @@ namespace N_Body.Render
 
                 ImGui.Begin("Controls");
                 ImGui.SliderFloat("Speed", ref _dt, 0.001f, 10000.0f);
+                if (ImGui.Button("Add Body"))
+                {
+                    _simulation.AddRandomBody();
+                }
+                ImGui.Text($"Bodies: {_simulation.Bodies.Count}");
                 ImGui.End();
 
                 _imguiController.Render();

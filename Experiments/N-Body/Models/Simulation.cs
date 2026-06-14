@@ -24,4 +24,18 @@ public class Simulation
             });
         }
     }
+          public void AddRandomBody()
+    {
+        Bodies.Add(new Body
+        {
+            name = $"Body_{Bodies.Count}",
+            mass = 1e24 + random.NextDouble() * 1e26,
+            X = (random.NextDouble() - 0.5) * 4e11,
+            Y = (random.NextDouble() - 0.5) * 4e11,
+            Z = 0,
+            vX = (random.NextDouble() - 0.5) * 1e3,
+            vY = (random.NextDouble() - 0.5) * 1e3,
+        });
+    }
+
 }
